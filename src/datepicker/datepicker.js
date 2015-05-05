@@ -457,7 +457,8 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   closeText: 'Done',
   closeOnDateSelection: true,
   appendToBody: false,
-  showButtonBar: true
+  showButtonBar: true,
+  openOnFocus: false
 })
 
 .directive('datepickerPopup', ['$compile', '$parse', '$document', '$position', 'dateFilter', 'dateParser', 'datepickerPopupConfig',
@@ -476,7 +477,8 @@ function ($compile, $parse, $document, $position, dateFilter, dateParser, datepi
     link: function(scope, element, attrs, ngModel) {
       var dateFormat,
           closeOnDateSelection = angular.isDefined(attrs.closeOnDateSelection) ? scope.$parent.$eval(attrs.closeOnDateSelection) : datepickerPopupConfig.closeOnDateSelection,
-          appendToBody = angular.isDefined(attrs.datepickerAppendToBody) ? scope.$parent.$eval(attrs.datepickerAppendToBody) : datepickerPopupConfig.appendToBody;
+          appendToBody = angular.isDefined(attrs.datepickerAppendToBody) ? scope.$parent.$eval(attrs.datepickerAppendToBody) : datepickerPopupConfig.appendToBody,
+          openOnFocus = angular.isDefined(attrs.datepickerOpenOnFocus) ? scope.$parent.$eval(attrs.datepickerOpenOnFocus) : datepickerPopupConfig.openOnFocus;
 
       scope.showButtonBar = angular.isDefined(attrs.showButtonBar) ? scope.$parent.$eval(attrs.showButtonBar) : datepickerPopupConfig.showButtonBar;
 
@@ -642,9 +644,11 @@ function ($compile, $parse, $document, $position, dateFilter, dateParser, datepi
         element.val(date);
         ngModel.$setViewValue(date);
 
-        if ( closeOnDateSelection ) {
+        if (closeOnDateSelection) {
           scope.isOpen = false;
-          element[0].focus();
+          if (!openOnFocus) {
+            element[0].focus(); 
+          }
         }
       };
 
@@ -677,6 +681,16 @@ function ($compile, $parse, $document, $position, dateFilter, dateParser, datepi
           scope.isOpen = true;
         }
       };
+      
+      var focus = function() {
+        scope.$apply(function () {
+          scope.isOpen = true;
+        });
+      };
+
+      if (openOnFocus) {
+        element.bind('focus', focus);
+      }
 
       scope.$watch('isOpen', function(value) {
         if (value) {
@@ -721,6 +735,7 @@ function ($compile, $parse, $document, $position, dateFilter, dateParser, datepi
       scope.$on('$destroy', function() {
         $popup.remove();
         element.unbind('keydown', keydown);
+        element.unbind('focus', focus);
         $document.unbind('click', documentClickBind);
       });
     }
